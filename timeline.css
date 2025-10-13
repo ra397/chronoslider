@@ -7,21 +7,16 @@
 #timeline {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+
+    width: 1500px;
+    justify-content: space-evenly;
 }
 
 .timeline-unit {
-    padding: 5px 10px;
+    flex: 1 1 auto;
     background: #eee;
-    border: 1px solid #ccc;
-    border-radius: 4px;
     white-space: nowrap;
-}
-
-.timeline-unit:hover {
-    cursor: pointer;
-}
-
-.pan-btn {
-    cursor: pointer;
+    text-align: center;
 }

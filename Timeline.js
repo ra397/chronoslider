@@ -2,27 +2,26 @@ class Timeline {
     constructor() {
         this.state = {
             resolution: "year",
-            centerDate: new Date(2021, 0, 1, 0),
-            visibleUnits: 8
+            startDate: new Date(2020, 0, 1, 0),
+            visibleUnits: 5
         }
     }
 
-    getUnits(centerDate, resolution, count) {
+    getUnits(startDate, resolution, count) {
         const units = [];
-        const center = Math.floor(count / 2);
 
-        for (let i = -center; i <= (count % 2 === 0 ? center - 1 : center); i++) {
+        for (let i = 0; i < count; i++) {
             let date;
             let formattedDate;
 
             switch (resolution) {
                 case 'year':
-                    date = new Date(centerDate.getFullYear() + i, 0, 1);
+                    date = new Date(startDate.getFullYear() + i, 0, 1);
                     formattedDate = date.getFullYear().toString();
                     break;
 
                 case 'month':
-                    date = new Date(centerDate.getFullYear(), centerDate.getMonth() + i, 1);
+                    date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
                     formattedDate = date.toLocaleString('default', {
                         month: 'short',
                         year: 'numeric',
@@ -30,21 +29,22 @@ class Timeline {
                     break;
 
                 case 'week':
-                    const day = centerDate.getDay();
-                    centerDate.setDate(centerDate.getDate() - day);
-                    centerDate.setHours(0, 0, 0, 0);
-                    date = new Date(centerDate);
-                    date.setDate(centerDate.getDate() + i * 7);
+                    const start = new Date(startDate);
+                    const day = start.getDay();
+                    start.setDate(start.getDate() - day); // Align to start of week
+                    start.setHours(0, 0, 0, 0);
+                    date = new Date(start);
+                    date.setDate(start.getDate() + i * 7);
                     formattedDate = date.toLocaleDateString('default', {
                         month: 'short',
                         day: '2-digit',
                         year: 'numeric',
-                    })
+                    });
                     break;
 
                 case 'day':
-                    date = new Date(centerDate);
-                    date.setDate(centerDate.getDate() + i);
+                    date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
                     formattedDate = date.toLocaleDateString('default', {
                         month: 'short',
                         day: '2-digit',
@@ -53,83 +53,85 @@ class Timeline {
                     break;
 
                 case 'hour':
-                    date = new Date(centerDate);
-                    date.setHours(centerDate.getHours() + i);
+                    date = new Date(startDate);
+                    date.setHours(startDate.getHours() + i);
                     formattedDate = date.toLocaleString('default', {
                         month: 'short',
                         day: '2-digit',
-                        year: 'numeric',
                         hour: 'numeric',
-                        minute: '2-digit',
                         hour12: true
-                    })
+                    });
                     break;
 
                 default:
                     throw new Error('Unsupported resolution: ' + resolution);
             }
 
-            units.push(formattedDate);
+            units.push({
+                date: date,
+                formattedDate: formattedDate
+            });
         }
+
         return units;
     }
 
     pan(direction) {
-        const { resolution, centerDate } = this.state;
-
-        const newDate = new Date(centerDate);
-
+        const { resolution, startDate } = this.state;
+        const newDate = new Date(startDate);
         const change = direction === 'right' ? 1 : direction === 'left' ? -1 : 0;
 
         switch (resolution) {
             case 'year':
-                newDate.setFullYear(centerDate.getFullYear() + change);
+                newDate.setFullYear(startDate.getFullYear() + change);
                 break;
             case 'month':
-                newDate.setMonth(centerDate.getMonth() + change);
+                newDate.setMonth(startDate.getMonth() + change);
                 break;
             case 'week':
-                newDate.setDate(centerDate.getDate() + change * 7);
+                newDate.setDate(startDate.getDate() + change * 7);
                 break;
             case 'day':
-                newDate.setDate(centerDate.getDate() + change);
+                newDate.setDate(startDate.getDate() + change);
                 break;
             case 'hour':
-                newDate.setHours(centerDate.getHours() + change);
+                newDate.setHours(startDate.getHours() + change);
                 break;
             default:
                 throw new Error('Unsupported resolution: ' + resolution);
         }
 
-        this.state.centerDate = newDate;
+        this.state.startDate = newDate;
         this.render();
     }
 
-    zoom(direction) {
+    zoom(direction, hoverDate) {
         const resolutions = ['year', 'month', 'week', 'day', 'hour'];
-        const { resolution } = this.state;
-        let { centerDate } = this.state;
+        const { resolution, startDate } = this.state;
 
         const currentIndex = resolutions.indexOf(resolution);
         let newIndex;
 
         if (direction === 'in') {
-            if (currentIndex >= resolutions.length - 1) return; // Already at finest resolution
+            if (currentIndex >= resolutions.length - 1) return;
             newIndex = currentIndex + 1;
-            if (this.state.centerDate) {
-                centerDate = new Date(this.state.centerDate);
-            }
         } else if (direction === 'out') {
-            if (currentIndex <= 0) return; // Already at coarsest resolution
+            if (currentIndex <= 0) return;
             newIndex = currentIndex - 1;
-            // Keep the current centerDate
         } else {
             throw new Error('Unsupported zoom direction: ' + direction);
         }
 
+        let newStartDate = startDate;
+
+        // If zooming in, and a hoverDate is provided, use it as new startDate
+        if (direction === 'in' && hoverDate) {
+            newStartDate = new Date(hoverDate);
+        }
+
         switch (resolutions[newIndex]) {
             case 'year':
-                this.state.visibleUnits = 8;
+                this.state.visibleUnits = 5;
                 break;
             case 'month':
                 this.state.visibleUnits = 12;
@@ -144,12 +146,12 @@ class Timeline {
                 this.state.visibleUnits = 12;
                 break;
             default:
-                this.state.visibleUnits = 8;
+                this.state.visibleUnits = 5;
         }
 
-        // Update state and re-render
         this.state.resolution = resolutions[newIndex];
-        this.state.centerDate = centerDate;
+        this.state.startDate = newStartDate;
+
         this.render();
     }
 
@@ -157,14 +159,14 @@ class Timeline {
         const timeline = document.getElementById('timeline');
         timeline.innerHTML = '';
 
-        const { centerDate, resolution, visibleUnits } = this.state;
-        const units = this.getUnits(centerDate, resolution, visibleUnits);
+        const { startDate, resolution, visibleUnits } = this.state;
+        const units = this.getUnits(startDate, resolution, visibleUnits);
 
-        units.forEach(unitLabel => {
+        units.forEach(unit => {
             const unitElem = document.createElement('span');
             unitElem.className = 'timeline-unit';
-            unitElem.textContent = unitLabel;
-
+            unitElem.textContent = unit.formattedDate;
+            unitElem.setAttribute('date', unit.date.toISOString());
             timeline.appendChild(unitElem);
         });
     }
