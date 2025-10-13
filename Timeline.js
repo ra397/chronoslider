@@ -5,6 +5,7 @@ class Timeline {
             startDate: new Date(2020, 0, 1, 0),
             visibleUnits: 5
         }
+        this.render();
     }
 
     getUnits(startDate, resolution, count) {

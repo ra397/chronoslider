@@ -1,4 +1,13 @@
 const timeline = new Timeline();
-timeline.render();
+const controller = new TimelineController(timeline);
 
-new TimelineController(timeline);
+controller.onRangeSelected(({ startDate, endDate }) => {
+    const startDateDisplay = document.createElement("div");
+    startDateDisplay.textContent = "Start time: " + startDate.toLocaleString();
+
+    const endDateDisplay = document.createElement("div");
+    endDateDisplay.textContent = "End time: " + endDate.toLocaleString();
+
+    document.body.append(startDateDisplay);
+    document.body.append(endDateDisplay);
+});
