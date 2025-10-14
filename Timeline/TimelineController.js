@@ -42,14 +42,20 @@ class TimelineController {
                 const clickedDate = new Date(unitElem.getAttribute('date'));
 
                 if (!this.startDate || (this.startDate && this.endDate)) {
-                    this.startDate = clickedDate;
+                    this.startDate = clickedDate; // TODO: add start marker on timeline
+
+                    unitElem.classList.add('show-arrow');
+                    unitElem.classList.remove('hide-arrow');
+
                     this.endDate = null;
                 } else {
                     if (clickedDate < this.startDate) {
                         this.endDate = this.startDate;
                         this.startDate = clickedDate;
                     } else {
-                        this.endDate = clickedDate;
+                        this.endDate = clickedDate; // TODO: add end marker on timeline
+                        unitElem.classList.add('show-arrow');
+                        unitElem.classList.remove('hide-arrow');
                     }
                 }
 

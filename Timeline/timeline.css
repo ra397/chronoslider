@@ -28,6 +28,7 @@
     padding-top: 1rem;
 }
 
+/* ticks */
 .timeline-unit::before {
     content: '';
     position: absolute;
@@ -37,6 +38,24 @@
     width: 2px;
     height: 1rem;
     background-color: #000;
+}
+
+/* selector */
+/* This class shows the pseudo-element by default or when it's added */
+.show-arrow.timeline-unit::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    transform: rotate(180deg) translateX(75%);
+    background-image: url("../icons/down-arrow.svg");
+    width: 20px;
+    height: 10px;
+    background-repeat: no-repeat;
+}
+
+/* This class will hide the pseudo-element */
+.hide-arrow.timeline-unit::after {
+    display: none;
 }
 
 .label-container {

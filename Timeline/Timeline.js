@@ -2,7 +2,7 @@ class Timeline {
     constructor() {
         this.state = {
             resolution: "year",
-            startDate: new Date(2020, 0, 1, 0),
+            startDate: new Date(2016, 0, 1, 0),
         }
         this.render();
     }
