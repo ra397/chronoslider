@@ -13,20 +13,22 @@ class Timeline {
 
         for (let i = 0; i < count; i++) {
             let date;
-            let formattedDate;
+            let formattedDate = {
+                smallText: '',
+                largeText: ''
+            }
 
             switch (resolution) {
                 case 'year':
                     date = new Date(startDate.getFullYear() + i, 0, 1);
-                    formattedDate = date.getFullYear().toString();
+                    formattedDate.largeText = date.getFullYear().toString();
+
                     break;
 
                 case 'month':
                     date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
-                    formattedDate = date.toLocaleString('default', {
-                        month: 'short',
-                        year: 'numeric',
-                    });
+                    formattedDate.smallText = date.getFullYear().toString();
+                    formattedDate.largeText = date.toLocaleString('default', { month: 'short' });
                     break;
 
                 case 'week':
@@ -36,31 +38,34 @@ class Timeline {
                     start.setHours(0, 0, 0, 0);
                     date = new Date(start);
                     date.setDate(start.getDate() + i * 7);
-                    formattedDate = date.toLocaleDateString('default', {
+
+                    formattedDate.smallText = date.getFullYear().toString();
+                    formattedDate.largeText = date.toLocaleDateString('default', {
                         month: 'short',
                         day: '2-digit',
-                        year: 'numeric',
                     });
                     break;
 
                 case 'day':
                     date = new Date(startDate);
                     date.setDate(startDate.getDate() + i);
-                    formattedDate = date.toLocaleDateString('default', {
+                    formattedDate.smallText = date.getFullYear().toString();
+                    formattedDate.largeText = date.toLocaleDateString('default', {
                         month: 'short',
                         day: '2-digit',
-                        year: 'numeric',
                     });
                     break;
 
                 case 'hour':
                     date = new Date(startDate);
                     date.setHours(startDate.getHours() + i);
-                    formattedDate = date.toLocaleString('default', {
+                    formattedDate.smallText = date.toLocaleDateString('default', {
                         month: 'short',
                         day: '2-digit',
+                    });
+                    formattedDate.largeText = date.toLocaleTimeString('default', {
                         hour: 'numeric',
-                        hour12: true
+                        hour12: true,
                     });
                     break;
 
@@ -166,8 +171,22 @@ class Timeline {
         units.forEach(unit => {
             const unitElem = document.createElement('span');
             unitElem.className = 'timeline-unit';
-            unitElem.textContent = unit.formattedDate;
             unitElem.setAttribute('date', unit.date.toISOString());
+
+            const smallTextElem = document.createElement('span');
+            smallTextElem.className = 'small-label';
+            smallTextElem.textContent = unit.formattedDate.smallText;
+
+            const largeTextElem = document.createElement('span');
+            largeTextElem.className = 'large-label';
+            largeTextElem.textContent = unit.formattedDate.largeText;
+
+            const labelContainerElem = document.createElement('span');
+            labelContainerElem.className = 'label-container';
+
+            labelContainerElem.appendChild(smallTextElem);
+            labelContainerElem.appendChild(largeTextElem);
+            unitElem.appendChild(labelContainerElem);
             timeline.appendChild(unitElem);
         });
     }

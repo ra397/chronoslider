@@ -49,12 +49,14 @@ class TimelineController {
 
         // Select start and end time with single-click
         this.timelineElement.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('timeline-unit')) return;
+            if (e.detail > 1) return; // ignore if dblclick
 
-            if (e.detail > 1) return;
+            const unitElem = e.target.closest('.timeline-unit');
+            if (!unitElem || !this.timelineElement.contains(unitElem)) return;
+
 
             clickTimeout = setTimeout(() => {
-                const clickedDate = new Date(e.target.getAttribute('date'));
+                const clickedDate = new Date(unitElem.getAttribute('date'));
 
                 if (!this.startDate || (this.startDate && this.endDate)) {
                     this.startDate = clickedDate;
@@ -108,9 +110,9 @@ class TimelineController {
     }
 
     _getZoomDate(event) {
-        const target = event.target;
-        if (!target.classList.contains('timeline-unit')) return null;
-        const isoDate = target.getAttribute('date');
+        const unitElem = event.target.closest('.timeline-unit');
+        if (!unitElem) return null;
+        const isoDate = unitElem.getAttribute('date');
         return new Date(isoDate);
     }
 }

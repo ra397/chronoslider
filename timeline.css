@@ -1,22 +1,54 @@
 #timeline-container {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    padding: 0.5rem;
+}
+
+#line {
+    flex-grow: 1;
+    height: 2px;
+    background-color: #000;
+    order: -1;
 }
 
 #timeline {
     display: flex;
-    flex-wrap: wrap;
     cursor: pointer;
     user-select: none;
-
-    width: 1500px;
     justify-content: space-evenly;
 }
 
 .timeline-unit {
     flex: 1 1 auto;
-    background: #eee;
     white-space: nowrap;
     text-align: center;
+
+    position: relative;
+
+    padding-top: 1rem;
+}
+
+.timeline-unit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 1rem;
+    background-color: #000;
+}
+
+.label-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.small-label {
+    font-size: 0.8rem;
+}
+
+.large-label {
+    font-size: 1.2rem;
 }
