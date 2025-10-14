@@ -3,7 +3,6 @@ class Timeline {
         this.state = {
             resolution: "year",
             startDate: new Date(2020, 0, 1, 0),
-            visibleUnits: 5
         }
         this.render();
     }
@@ -135,26 +134,6 @@ class Timeline {
             newStartDate = new Date(hoverDate);
         }
 
-        switch (resolutions[newIndex]) {
-            case 'year':
-                this.state.visibleUnits = 5;
-                break;
-            case 'month':
-                this.state.visibleUnits = 12;
-                break;
-            case 'week':
-                this.state.visibleUnits = 4;
-                break;
-            case 'day':
-                this.state.visibleUnits = 7;
-                break;
-            case 'hour':
-                this.state.visibleUnits = 12;
-                break;
-            default:
-                this.state.visibleUnits = 5;
-        }
-
         this.state.resolution = resolutions[newIndex];
         this.state.startDate = newStartDate;
 
@@ -165,8 +144,12 @@ class Timeline {
         const timeline = document.getElementById('timeline');
         timeline.innerHTML = '';
 
-        const { startDate, resolution, visibleUnits } = this.state;
-        const units = this.getUnits(startDate, resolution, visibleUnits);
+        const { startDate, resolution} = this.state;
+
+        // calculate the number of ticks based on timeline width
+        const numUnitsToShow = Math.floor(timeline.offsetWidth / 75);
+
+        const units = this.getUnits(startDate, resolution, numUnitsToShow);
 
         units.forEach(unit => {
             const unitElem = document.createElement('span');

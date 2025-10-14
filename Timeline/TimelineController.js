@@ -21,32 +21,15 @@ class TimelineController {
     }
 
     _bindEvents() {
-        let clickTimeout = null;
+        this.clickTimeout = null;
+        this._selectRangeEvents();
+        this._zoomInEvent();
+        this._timelineResizeEvent();
+        this._panEvent();
+        this._zoomOutEvent();
+    }
 
-        // Double-click zoom in
-        this.timelineElement.addEventListener('dblclick', (e) => {
-            if (clickTimeout) {
-                clearTimeout(clickTimeout); // Cancel pending click action
-                clickTimeout = null;
-            }
-
-            const zoomToDate = this._getZoomDate(e);
-            if (!zoomToDate) return;
-
-            this.timeline.zoom('in', zoomToDate);
-        });
-
-        // Scroll wheel to zoom out
-        this.timelineElement.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            this.timeline.zoom('out');
-        });
-
-        // Drag to pan
-        this.timelineElement.addEventListener('mousedown', this._onMouseDown.bind(this));
-        document.addEventListener('mousemove', this._onMouseMove.bind(this));
-        document.addEventListener('mouseup', this._onMouseUp.bind(this));
-
+    _selectRangeEvents() {
         // Select start and end time with single-click
         this.timelineElement.addEventListener('click', (e) => {
             if (e.detail > 1) return; // ignore if dblclick
@@ -55,7 +38,7 @@ class TimelineController {
             if (!unitElem || !this.timelineElement.contains(unitElem)) return;
 
 
-            clickTimeout = setTimeout(() => {
+            this.clickTimeout = setTimeout(() => {
                 const clickedDate = new Date(unitElem.getAttribute('date'));
 
                 if (!this.startDate || (this.startDate && this.endDate)) {
@@ -75,10 +58,47 @@ class TimelineController {
                         this._rangeSelectedCallback({ startDate: this.startDate, endDate: this.endDate });
                     }
                 }
-
-                clickTimeout = null;
-            }, 250);
+                this.clickTimeout = null;
+            }, 333);
         });
+    }
+
+    _timelineResizeEvent() {
+        // Listen to timeline resizing and adjust re-render
+        const resizeObserver = new ResizeObserver(() => {
+            this.timeline.render();
+        });
+        resizeObserver.observe(this.timelineElement);
+    }
+
+    _zoomInEvent() {
+        // Double-click zoom in
+        this.timelineElement.addEventListener('dblclick', (e) => {
+            if (this.clickTimeout) {
+                clearTimeout(this.clickTimeout); // Cancel pending click action
+                this.clickTimeout = null;
+            }
+
+            const zoomToDate = this._getZoomDate(e);
+            if (!zoomToDate) return;
+
+            this.timeline.zoom('in', zoomToDate);
+        });
+    }
+
+    _zoomOutEvent() {
+        // Scroll wheel to zoom out
+        this.timelineElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            this.timeline.zoom('out');
+        });
+    }
+
+    _panEvent() {
+        // Drag to pan
+        this.timelineElement.addEventListener('mousedown', this._onMouseDown.bind(this));
+        document.addEventListener('mousemove', this._onMouseMove.bind(this));
+        document.addEventListener('mouseup', this._onMouseUp.bind(this));
     }
 
     _onMouseDown(e) {
