@@ -51,10 +51,20 @@
     position: absolute;
     bottom: 100%;
     transform: rotate(180deg) translateX(75%);
-    background-image: url("../icons/down-arrow.svg");
+    background-image: url("../icons/red-down-arrow.svg");
+    color: red;
     width: 20px;
     height: 10px;
     background-repeat: no-repeat;
+}
+/* Red arrow */
+.show-arrow.red-arrow::after {
+    background-image: url("../icons/red-down-arrow.svg");
+}
+
+/* Green arrow */
+.show-arrow.green-arrow::after {
+    background-image: url("../icons/green-down-arrow.svg");
 }
 
 /* This class will hide the pseudo-element */

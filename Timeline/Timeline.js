@@ -183,7 +183,7 @@ class Timeline {
         this.render();
     }
 
-    getEndDate(date) {
+    getEndDate() {
         return this.selectedEndDate;
     }
 
@@ -216,11 +216,11 @@ class Timeline {
 
             // add selection ticks to start and end selections (if available)
             if (this.selectedStartDate !== null && unit.date.getTime() === this.selectedStartDate.getTime()) {
-                unitElem.classList.add('show-arrow');
+                unitElem.classList.add('show-arrow', 'green-arrow');
                 unitElem.classList.remove('hide-arrow');
             }
             if (this.selectedEndDate !== null && unit.date.getTime() === this.selectedEndDate.getTime()) {
-                unitElem.classList.add('show-arrow');
+                unitElem.classList.add('show-arrow', 'red-arrow');
                 unitElem.classList.remove('hide-arrow');
             }
 
