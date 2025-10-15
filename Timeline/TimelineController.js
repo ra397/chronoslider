@@ -3,13 +3,10 @@ class TimelineController {
         this.timeline = timelineInstance;
         this.timelineElement = document.getElementById('timeline');
 
-        this.dragThreshold = 50;
+        this.dragThreshold = 15;
         this.isDragging = false;
         this.lastX = 0;
         this.accumulatedDelta = 0;
-
-        this.startDate = null;
-        this.endDate = null;
 
         this._rangeSelectedCallback = null; // callback when a user has selected date range
 
@@ -41,27 +38,46 @@ class TimelineController {
             this.clickTimeout = setTimeout(() => {
                 const clickedDate = new Date(unitElem.getAttribute('date'));
 
-                if (!this.startDate || (this.startDate && this.endDate)) {
-                    this.startDate = clickedDate; // TODO: add start marker on timeline
-
-                    unitElem.classList.add('show-arrow');
-                    unitElem.classList.remove('hide-arrow');
-
+                // Case 1: No dates selected
+                if (!this.timeline.getStartDate() && !this.timeline.getEndDate()) {
+                    this.timeline.setStartDate(clickedDate);
                     this.endDate = null;
-                } else {
-                    if (clickedDate < this.startDate) {
-                        this.endDate = this.startDate;
-                        this.startDate = clickedDate;
+                }
+                // Case 2: Only a start date is selected
+                else if (this.timeline.getStartDate() && !this.timeline.getEndDate()) {
+                    if (clickedDate.getTime() === this.timeline.getStartDate().getTime()) {
+                        this.timeline.clearStartDate();
                     } else {
-                        this.endDate = clickedDate; // TODO: add end marker on timeline
-                        unitElem.classList.add('show-arrow');
-                        unitElem.classList.remove('hide-arrow');
+                        if (clickedDate.getTime() < this.timeline.getStartDate().getTime()) {
+                            this.timeline.setEndDate(this.timeline.getStartDate());
+                            this.timeline.setStartDate(clickedDate);
+                        } else {
+                            this.timeline.setEndDate(clickedDate);
+                        }
+                        if (this._rangeSelectedCallback) {
+                            this._rangeSelectedCallback({ startDate: this.timeline.getStartDate(), endDate: this.timeline.getEndDate() });
+                        }
                     }
                 }
-
-                if (this.startDate && this.endDate) {
-                    if (this._rangeSelectedCallback) {
-                        this._rangeSelectedCallback({ startDate: this.startDate, endDate: this.endDate });
+                // Case 3: A start date and end date are selected
+                else if (this.timeline.getStartDate() && this.timeline.getEndDate()) {
+                    if (clickedDate.getTime() === this.timeline.getStartDate().getTime()) {
+                        this.timeline.clearStartDate();
+                        this.timeline.setStartDate(this.timeline.getEndDate());
+                        this.timeline.clearEndDate();
+                    }  else if (clickedDate.getTime() === this.timeline.getEndDate().getTime()) {
+                        this.timeline.clearEndDate();
+                    }
+                }
+                // Case 4: Only an end date is selected
+                else if (this.timeline.getEndDate() && !this.timeline.getStartDate()) {
+                    if (clickedDate.getTime() > this.timeline.getEndDate().getTime()) {
+                        this.timeline.setEndDate(this.timeline.getStartDate());
+                        this.timeline.setStartDate(clickedDate);
+                    } else if (clickedDate.getTime() < this.timeline.getEndDate().getTime()) {
+                        this.timeline.setStartDate(clickedDate);
+                    } else {
+                        this.timeline.clearEndDate();
                     }
                 }
                 this.clickTimeout = null;
@@ -95,9 +111,9 @@ class TimelineController {
     _zoomOutEvent() {
         // Scroll wheel to zoom out
         this.timelineElement.addEventListener('wheel', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // prevent the browser from scrolling window
             this.timeline.zoom('out');
-        });
+        }, { passive: false });
     }
 
     _panEvent() {

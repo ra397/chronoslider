@@ -1,5 +1,7 @@
 class Timeline {
     constructor() {
+        this.selectedStartDate = null;
+        this.selectedEndDate = null;
         this.state = {
             resolution: "year",
             startDate: new Date(2016, 0, 1, 0),
@@ -8,77 +10,103 @@ class Timeline {
     }
 
     getUnits(startDate, resolution, count) {
-        const units = [];
+        let ticks = [];
+        let date;
 
         for (let i = 0; i < count; i++) {
-            let date;
-            let formattedDate = {
-                smallText: '',
-                largeText: ''
-            }
-
             switch (resolution) {
-                case 'year':
-                    date = new Date(startDate.getFullYear() + i, 0, 1);
-                    formattedDate.largeText = date.getFullYear().toString();
-
-                    break;
-
-                case 'month':
+                case 'year': {
                     date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
-                    formattedDate.smallText = date.getFullYear().toString();
-                    formattedDate.largeText = date.toLocaleString('default', { month: 'short' });
-                    break;
 
-                case 'week':
-                    const start = new Date(startDate);
-                    const day = start.getDay();
-                    start.setDate(start.getDate() - day); // Align to start of week
-                    start.setHours(0, 0, 0, 0);
-                    date = new Date(start);
-                    date.setDate(start.getDate() + i * 7);
+                    let label = {
+                        smallText: '',
+                        largeText: ''
+                    };
 
-                    formattedDate.smallText = date.getFullYear().toString();
-                    formattedDate.largeText = date.toLocaleDateString('default', {
-                        month: 'short',
-                        day: '2-digit',
+                    if (date.getMonth() === 0) {
+                        label.largeText = date.getFullYear().toString();
+                    }
+
+                    ticks.push({
+                        date: date,
+                        label: label,
                     });
                     break;
+                }
 
-                case 'day':
-                    date = new Date(startDate);
-                    date.setDate(startDate.getDate() + i);
-                    formattedDate.smallText = date.getFullYear().toString();
-                    formattedDate.largeText = date.toLocaleDateString('default', {
-                        month: 'short',
-                        day: '2-digit',
+                case 'month': {
+                    date = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
+
+                    let label = {
+                        smallText: '',
+                        largeText: ''
+                    };
+
+                    if (date.getDate() === 1) {
+                        label.smallText = date.getFullYear().toString();
+                        label.largeText = date.toLocaleString('default', { month: 'short' });
+                    }
+
+                    ticks.push({
+                        date: date,
+                        label: label,
                     });
                     break;
+                }
 
-                case 'hour':
-                    date = new Date(startDate);
-                    date.setHours(startDate.getHours() + i);
-                    formattedDate.smallText = date.toLocaleDateString('default', {
-                        month: 'short',
-                        day: '2-digit',
-                    });
-                    formattedDate.largeText = date.toLocaleTimeString('default', {
-                        hour: 'numeric',
-                        hour12: true,
+                case 'day': {
+                    date = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startDate.getHours() + i);
+
+                    let label = {
+                        smallText: '',
+                        largeText: ''
+                    };
+
+                    if (date.getHours() === 0) {
+                        label.smallText = date.getFullYear().toString();
+                        label.largeText = date.toLocaleDateString('default', {
+                            month: 'short',
+                            day: '2-digit',
+                        });
+                    }
+
+                    ticks.push({
+                        date: date,
+                        label: label,
                     });
                     break;
+                }
+
+                case 'hour': {
+                    date = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startDate.getHours(), startDate.getMinutes() + i * 5);
+
+                    let label = {
+                        smallText: '',
+                        largeText: ''
+                    };
+
+                    if (date.getMinutes() === 0) {
+                        label.smallText = date.toLocaleDateString('default', {
+                            month: 'short',
+                            day: '2-digit',
+                        });
+                        label.largeText = date.toLocaleTimeString('default', {
+                            hour: 'numeric',
+                            hour12: true,
+                        });                    }
+
+                    ticks.push({
+                        date: date,
+                        label: label,
+                    });
+                    break;
+                }
 
                 default:
-                    throw new Error('Unsupported resolution: ' + resolution);
+                    throw new Error(`Unsupported resolution: ${resolution}`);
             }
-
-            units.push({
-                date: date,
-                formattedDate: formattedDate
-            });
         }
-
-        return units;
+        return ticks;
     }
 
     pan(direction) {
@@ -88,30 +116,26 @@ class Timeline {
 
         switch (resolution) {
             case 'year':
-                newDate.setFullYear(startDate.getFullYear() + change);
-                break;
-            case 'month':
                 newDate.setMonth(startDate.getMonth() + change);
                 break;
-            case 'week':
-                newDate.setDate(startDate.getDate() + change * 7);
-                break;
-            case 'day':
+            case 'month':
                 newDate.setDate(startDate.getDate() + change);
                 break;
-            case 'hour':
+            case 'day':
                 newDate.setHours(startDate.getHours() + change);
+                break;
+            case 'hour':
+                newDate.setMinutes(startDate.getMinutes() + change * 5);
                 break;
             default:
                 throw new Error('Unsupported resolution: ' + resolution);
         }
-
         this.state.startDate = newDate;
         this.render();
     }
 
     zoom(direction, hoverDate) {
-        const resolutions = ['year', 'month', 'week', 'day', 'hour'];
+        const resolutions = ['year', 'month', 'day', 'hour'];
         const { resolution, startDate } = this.state;
 
         const currentIndex = resolutions.indexOf(resolution);
@@ -140,14 +164,44 @@ class Timeline {
         this.render();
     }
 
+    setStartDate(date) {
+        this.selectedStartDate = date;
+        this.render();
+    }
+
+    getStartDate() {
+        return this.selectedStartDate;
+    }
+
+    clearStartDate() {
+        this.selectedStartDate = null;
+        this.render();
+    }
+
+    setEndDate(date) {
+        this.selectedEndDate = date;
+        this.render();
+    }
+
+    getEndDate(date) {
+        return this.selectedEndDate;
+    }
+
+    clearEndDate() {
+        this.selectedEndDate = null;
+        this.render();
+    }
+
     render() {
+        // TODO: don't hardcode 15px width
+
         const timeline = document.getElementById('timeline');
         timeline.innerHTML = '';
 
         const { startDate, resolution} = this.state;
 
         // calculate the number of ticks based on timeline width
-        const numUnitsToShow = Math.floor(timeline.offsetWidth / 75);
+        const numUnitsToShow = Math.floor(timeline.offsetWidth / 15);
 
         const units = this.getUnits(startDate, resolution, numUnitsToShow);
 
@@ -156,16 +210,35 @@ class Timeline {
             unitElem.className = 'timeline-unit';
             unitElem.setAttribute('date', unit.date.toISOString());
 
+            // clear all selection ticks
+            unitElem.classList.remove('show-arrow');
+            unitElem.classList.add('hide-arrow');
+
+            // add selection ticks to start and end selections (if available)
+            if (this.selectedStartDate !== null && unit.date.getTime() === this.selectedStartDate.getTime()) {
+                unitElem.classList.add('show-arrow');
+                unitElem.classList.remove('hide-arrow');
+            }
+            if (this.selectedEndDate !== null && unit.date.getTime() === this.selectedEndDate.getTime()) {
+                unitElem.classList.add('show-arrow');
+                unitElem.classList.remove('hide-arrow');
+            }
+
+            if (unit.label.smallText !== '' || unit.label.largeText !== '') {
+                unitElem.classList.add('long-tick');
+            }
+
             const smallTextElem = document.createElement('span');
             smallTextElem.className = 'small-label';
-            smallTextElem.textContent = unit.formattedDate.smallText;
+            smallTextElem.textContent = unit.label.smallText;
 
             const largeTextElem = document.createElement('span');
             largeTextElem.className = 'large-label';
-            largeTextElem.textContent = unit.formattedDate.largeText;
+            largeTextElem.textContent = unit.label.largeText;
 
             const labelContainerElem = document.createElement('span');
             labelContainerElem.className = 'label-container';
+            labelContainerElem.style.width = '15px';
 
             labelContainerElem.appendChild(smallTextElem);
             labelContainerElem.appendChild(largeTextElem);
