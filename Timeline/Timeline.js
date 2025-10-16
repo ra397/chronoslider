@@ -6,7 +6,6 @@ class Timeline {
             resolution: "year",
             startDate: new Date(2016, 0, 1, 0),
         }
-        this.render();
     }
 
     getUnits(startDate, resolution, count) {
@@ -203,26 +202,14 @@ class Timeline {
         // calculate the number of ticks based on timeline width
         const numUnitsToShow = Math.floor(timeline.offsetWidth / 15);
 
+        // get units
         const units = this.getUnits(startDate, resolution, numUnitsToShow);
 
+        // generate ticks from units
         units.forEach(unit => {
             const unitElem = document.createElement('span');
             unitElem.className = 'timeline-unit';
             unitElem.setAttribute('date', unit.date.toISOString());
-
-            // clear all selection ticks
-            unitElem.classList.remove('show-arrow');
-            unitElem.classList.add('hide-arrow');
-
-            // add selection ticks to start and end selections (if available)
-            if (this.selectedStartDate !== null && unit.date.getTime() === this.selectedStartDate.getTime()) {
-                unitElem.classList.add('show-arrow', 'green-arrow');
-                unitElem.classList.remove('hide-arrow');
-            }
-            if (this.selectedEndDate !== null && unit.date.getTime() === this.selectedEndDate.getTime()) {
-                unitElem.classList.add('show-arrow', 'red-arrow');
-                unitElem.classList.remove('hide-arrow');
-            }
 
             if (unit.label.smallText !== '' || unit.label.largeText !== '') {
                 unitElem.classList.add('long-tick');
@@ -245,6 +232,40 @@ class Timeline {
             unitElem.appendChild(labelContainerElem);
             timeline.appendChild(unitElem);
         });
+
+        // place markers
+        const startMarkerEl = document.getElementById('start-marker');
+        const stopMarkerEl = document.getElementById('stop-marker');
+        const rangeBeginning = units[0].date;
+        const rangeEnd = units[units.length - 1].date;
+        const totalDuration = rangeEnd - rangeBeginning;
+        if (this.selectedStartDate) {
+            const elapsedDuration = this.selectedStartDate - rangeBeginning;
+            const percentage = (elapsedDuration / totalDuration) * 100;
+            if (percentage > 100 || percentage < 0) {
+                startMarkerEl.style.display = 'none';
+            } else {
+                startMarkerEl.style.left = `calc(${percentage}% - ${(elapsedDuration / totalDuration) * 15}px)`;
+                startMarkerEl.style.display = 'inline-block';
+            }
+        } else {
+            startMarkerEl.style.display = 'none';
+        }
+        if (this.selectedEndDate) {
+            const elapsedDuration = this.selectedEndDate - rangeBeginning;
+            const percentage = (elapsedDuration / totalDuration) * 100;
+            if (percentage > 100 || percentage < 0) { // is it in range?
+                stopMarkerEl.style.display = 'none';
+            } else {
+                stopMarkerEl.style.left = `calc(${percentage}% - ${(elapsedDuration / totalDuration) * 15}px)`;
+                stopMarkerEl.style.display = 'inline-block';
+            }
+            if (startMarkerEl.style.display !== 'none') {
+                startMarkerEl.style.top = '15px';
+            }
+        } else {
+            stopMarkerEl.style.display = 'none';
+        }
     }
 }
 window.Timeline = Timeline;

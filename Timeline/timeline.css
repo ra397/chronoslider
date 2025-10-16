@@ -1,17 +1,23 @@
 #timeline-container {
     display: flex;
     flex-direction: column;
-    padding: 0.5rem;
+
+    /* TODO: remove this, (just for testing)*/
+    position: absolute;
+    bottom: 50%;
+    right: 50%;
+    width: 500px;
 }
 
 #line {
     flex-grow: 1;
-    height: 2px;
+    outline: 1px solid black;
+    max-height: 0;
     background-color: #000;
-    order: -1;
 }
 
 #timeline {
+    --unit-width: 15px; /* TODO: do not hardcode unit width */
     display: flex;
     cursor: pointer;
     user-select: none;
@@ -22,6 +28,7 @@
     flex: 1 1 auto;
     white-space: nowrap;
     text-align: center;
+    max-width: var(--unit-width);
 
     position: relative;
 
@@ -35,41 +42,14 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 2px;
+    outline: 1px solid black;
+    width: 0;
     height: 0.35rem;
     background-color: #000;
 }
 
 .timeline-unit.long-tick::before {
     height: 0.8rem;
-}
-
-/* selector */
-/* This class shows the pseudo-element by default or when it's added */
-.show-arrow.timeline-unit::after {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    transform: rotate(180deg) translateX(75%);
-    background-image: url("../icons/red-down-arrow.svg");
-    color: red;
-    width: 20px;
-    height: 10px;
-    background-repeat: no-repeat;
-}
-/* Red arrow */
-.show-arrow.red-arrow::after {
-    background-image: url("../icons/red-down-arrow.svg");
-}
-
-/* Green arrow */
-.show-arrow.green-arrow::after {
-    background-image: url("../icons/green-down-arrow.svg");
-}
-
-/* This class will hide the pseudo-element */
-.hide-arrow.timeline-unit::after {
-    display: none;
 }
 
 .label-container {
@@ -87,4 +67,21 @@
 
 .large-label {
     font-size: 1.2rem;
+}
+
+/* Selection markers */
+#start-marker {
+    width: 15px;
+    height: 15px;
+
+    position: relative;
+    display: none;
+}
+
+#stop-marker {
+    width: 15px;
+    height: 15px;
+
+    position: relative;
+    display: none;
 }
