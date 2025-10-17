@@ -136,6 +136,10 @@ class Timeline {
     zoom(direction, hoverDate) {
         const resolutions = ['year', 'month', 'day', 'hour'];
         const { resolution, startDate } = this.state;
+        const timelineElem = document.getElementById('timeline');
+        const unitWidth = 15;
+        const numUnitsToShow = Math.floor(timelineElem.offsetWidth / unitWidth);
+        const halfCount = Math.floor(numUnitsToShow / 2);
 
         const currentIndex = resolutions.indexOf(resolution);
         let newIndex;
@@ -150,18 +154,68 @@ class Timeline {
             throw new Error('Unsupported zoom direction: ' + direction);
         }
 
-        let newStartDate = startDate;
+        const newResolution = resolutions[newIndex];
+        let newStartDate = new Date(startDate);
 
-        // If zooming in, and a hoverDate is provided, use it as new startDate
         if (direction === 'in' && hoverDate) {
-            newStartDate = new Date(hoverDate);
+            // Center hoverDate in new view
+            const centerDate = new Date(hoverDate);
+            switch (newResolution) {
+                case 'year':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth() - halfCount, 1);
+                    break;
+                case 'month':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth(), centerDate.getDate() - halfCount);
+                    break;
+                case 'day':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth(), centerDate.getDate(), centerDate.getHours() - halfCount);
+                    break;
+                case 'hour':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth(), centerDate.getDate(), centerDate.getHours(), centerDate.getMinutes() - halfCount * 5);
+                    break;
+            }
         }
 
-        this.state.resolution = resolutions[newIndex];
-        this.state.startDate = newStartDate;
+        if (direction === 'out') {
+            // Estimate current center of visible units
+            let centerDate = new Date(startDate);
+            switch (resolution) {
+                case 'year':
+                    centerDate.setMonth(centerDate.getMonth() + halfCount);
+                    break;
+                case 'month':
+                    centerDate.setDate(centerDate.getDate() + halfCount);
+                    break;
+                case 'day':
+                    centerDate.setHours(centerDate.getHours() + halfCount);
+                    break;
+                case 'hour':
+                    centerDate.setMinutes(centerDate.getMinutes() + halfCount * 5);
+                    break;
+            }
 
+            // Now center that date in the new (zoomed-out) resolution
+            switch (newResolution) {
+                case 'year':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth() - halfCount, 1);
+                    break;
+                case 'month':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth(), centerDate.getDate() - halfCount);
+                    break;
+                case 'day':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth(), centerDate.getDate(), centerDate.getHours() - halfCount);
+                    break;
+                case 'hour':
+                    newStartDate = new Date(centerDate.getFullYear(), centerDate.getMonth(), centerDate.getDate(), centerDate.getHours(), centerDate.getMinutes() - halfCount * 5);
+                    break;
+            }
+        }
+
+        this.state.resolution = newResolution;
+        this.state.startDate = newStartDate;
         this.render();
     }
+
 
     setStartDate(date) {
         this.selectedStartDate = date;
@@ -191,6 +245,12 @@ class Timeline {
         this.render();
     }
 
+    // returns the number of ticks to show based on the width of the timeline
+    getNumUnitsToShow() {
+        const timeline = document.getElementById('timeline');
+        return Math.floor(timeline.offsetWidth / 15);
+    }
+
     render() {
         // TODO: don't hardcode 15px width
 
@@ -200,7 +260,7 @@ class Timeline {
         const { startDate, resolution} = this.state;
 
         // calculate the number of ticks based on timeline width
-        const numUnitsToShow = Math.floor(timeline.offsetWidth / 15);
+        const numUnitsToShow = this.getNumUnitsToShow();
 
         // get units
         const units = this.getUnits(startDate, resolution, numUnitsToShow);
@@ -217,7 +277,7 @@ class Timeline {
 
             const smallTextElem = document.createElement('span');
             smallTextElem.className = 'small-label';
-            smallTextElem.textContent = unit.label.smallText;
+            smallTextElem.innerHTML = unit.label.smallText;
 
             const largeTextElem = document.createElement('span');
             largeTextElem.className = 'large-label';
@@ -227,8 +287,8 @@ class Timeline {
             labelContainerElem.className = 'label-container';
             labelContainerElem.style.width = '15px';
 
-            labelContainerElem.appendChild(smallTextElem);
             labelContainerElem.appendChild(largeTextElem);
+            labelContainerElem.appendChild(smallTextElem);
             unitElem.appendChild(labelContainerElem);
             timeline.appendChild(unitElem);
         });
