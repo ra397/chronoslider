@@ -216,7 +216,6 @@ class Timeline {
         this.render();
     }
 
-
     setStartDate(date) {
         this.selectedStartDate = date;
         this.render();

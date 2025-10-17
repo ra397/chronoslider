@@ -106,15 +106,34 @@ class TimelineController {
 
             this.timeline.zoom('in', zoomToDate);
         });
+
+        // Scroll to zoom in
+        this.timelineElement.addEventListener('wheel', (e) => {
+            if (e.deltaY < 0) {
+                e.preventDefault();
+
+                // find center
+                const timelineSpans = this.timelineElement.children;
+                if (timelineSpans.length === 0) return;
+
+                const middleTimeSpan = timelineSpans[ Math.floor((timelineSpans.length - 1) / 2)];
+                const isoDate = middleTimeSpan.getAttribute('date');
+                const zoomToDate = new Date(isoDate);
+
+                this.timeline.zoom('in', zoomToDate);
+            }
+        }, { passive: false });
     }
 
     _zoomOutEvent() {
-        // Scroll wheel to zoom out
         this.timelineElement.addEventListener('wheel', (e) => {
-            e.preventDefault(); // prevent the browser from scrolling window
-            this.timeline.zoom('out');
+            if (e.deltaY > 0) { // Only zoom out on scroll backward
+                e.preventDefault(); // prevent the browser from scrolling window
+                this.timeline.zoom('out');
+            }
         }, { passive: false });
     }
+
 
     _panEvent() {
         // Drag to pan
