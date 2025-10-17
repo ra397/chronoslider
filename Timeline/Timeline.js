@@ -260,9 +260,6 @@ class Timeline {
                 stopMarkerEl.style.left = `calc(${percentage}% - ${(elapsedDuration / totalDuration) * 15}px)`;
                 stopMarkerEl.style.display = 'inline-block';
             }
-            if (startMarkerEl.style.display !== 'none') {
-                startMarkerEl.style.top = '15px';
-            }
         } else {
             stopMarkerEl.style.display = 'none';
         }

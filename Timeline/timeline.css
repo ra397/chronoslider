@@ -1,6 +1,8 @@
+/* TODO: anywhere where we hardcode 15px should be dynamic instead */
 #timeline-container {
     display: flex;
     flex-direction: column;
+    padding-top: 15px;
 
     /* TODO: remove this, (just for testing)*/
     position: absolute;
@@ -17,7 +19,7 @@
 }
 
 #timeline {
-    --unit-width: 15px; /* TODO: do not hardcode unit width */
+    --unit-width: 15px;
     display: flex;
     cursor: pointer;
     user-select: none;
@@ -74,7 +76,8 @@
     width: 15px;
     height: 15px;
 
-    position: relative;
+    position: absolute;
+    top: 0;
     display: none;
 }
 
@@ -82,6 +85,7 @@
     width: 15px;
     height: 15px;
 
-    position: relative;
+    position: absolute;
+    top: 0;
     display: none;
 }
