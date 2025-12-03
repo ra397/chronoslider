@@ -2,7 +2,7 @@
 A lightweight, configurable timeline component for selecting date ranges. Supports multiple zoom levels, drag-to-pan, and is responsive to container size.
 
 ## Demo
-[Try on CodePen]()
+[Try on CodePen](https://codepen.io/ra397/full/myPzrzM)
 
 ## Features
 - **Date range selection**: select start/end date
