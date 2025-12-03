@@ -1,15 +1,11 @@
-const timeline = new Timeline();
+import { Timeline } from "./Timeline/Timeline.js";
+import { TimelineController } from "./Timeline/TimelineController.js";
+
+const timeline = new Timeline({
+    unitWidth: 35,
+});
 const controller = new TimelineController(timeline);
 
-window.timeline = timeline; // TODO: remove, for testing purposes only
-
 controller.onRangeSelected(({ startDate, endDate }) => {
-    const startDateDisplay = document.createElement("div");
-    startDateDisplay.textContent = "Start time: " + startDate.toLocaleString();
-
-    const endDateDisplay = document.createElement("div");
-    endDateDisplay.textContent = "End time: " + endDate.toLocaleString();
-
-    document.body.append(startDateDisplay);
-    document.body.append(endDateDisplay);
+    console.log(startDate, endDate);
 });

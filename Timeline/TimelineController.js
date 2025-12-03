@@ -1,4 +1,4 @@
-class TimelineController {
+export class TimelineController {
     constructor(timelineInstance) {
         this.timeline = timelineInstance;
         this.timelineElement = document.getElementById('timeline');
@@ -177,4 +177,3 @@ class TimelineController {
         return new Date(isoDate);
     }
 }
-window.TimelineController = TimelineController;

@@ -1,11 +1,12 @@
-class Timeline {
-    constructor() {
+export class Timeline {
+    constructor(options = {}) {
         this.selectedStartDate = null;
         this.selectedEndDate = null;
         this.state = {
             resolution: "year",
-            startDate: new Date(2016, 0, 1, 0),
+            startDate: new Date(2025, 0, 1, 0),
         }
+        this.unitWidth = options.unitWidth || 15;
     }
 
     getUnits(startDate, resolution, count) {
@@ -137,8 +138,7 @@ class Timeline {
         const resolutions = ['year', 'month', 'day', 'hour'];
         const { resolution, startDate } = this.state;
         const timelineElem = document.getElementById('timeline');
-        const unitWidth = 15;
-        const numUnitsToShow = Math.floor(timelineElem.offsetWidth / unitWidth);
+        const numUnitsToShow = Math.floor(timelineElem.offsetWidth / this.unitWidth);
         const halfCount = Math.floor(numUnitsToShow / 2);
 
         const currentIndex = resolutions.indexOf(resolution);
@@ -247,11 +247,12 @@ class Timeline {
     // returns the number of ticks to show based on the width of the timeline
     getNumUnitsToShow() {
         const timeline = document.getElementById('timeline');
-        return Math.floor(timeline.offsetWidth / 15);
+        return Math.floor(timeline.offsetWidth / this.unitWidth);
     }
 
     render() {
-        // TODO: don't hardcode 15px width
+        const timelineContainer = document.getElementById('timeline-container');
+        timelineContainer.style.setProperty('--unit-width', `${this.unitWidth}px`);
 
         const timeline = document.getElementById('timeline');
         timeline.innerHTML = '';
@@ -284,7 +285,7 @@ class Timeline {
 
             const labelContainerElem = document.createElement('span');
             labelContainerElem.className = 'label-container';
-            labelContainerElem.style.width = '15px';
+            labelContainerElem.style.width = `${this.unitWidth}px`;
 
             labelContainerElem.appendChild(largeTextElem);
             labelContainerElem.appendChild(smallTextElem);
@@ -304,7 +305,7 @@ class Timeline {
             if (percentage > 100 || percentage < 0) {
                 startMarkerEl.style.display = 'none';
             } else {
-                startMarkerEl.style.left = `calc(${percentage}% - ${(elapsedDuration / totalDuration) * 15}px)`;
+                startMarkerEl.style.left = `calc(${percentage}% - ${(elapsedDuration / totalDuration) * this.unitWidth}px)`;
                 startMarkerEl.style.display = 'inline-block';
             }
         } else {
@@ -316,7 +317,7 @@ class Timeline {
             if (percentage > 100 || percentage < 0) { // is it in range?
                 stopMarkerEl.style.display = 'none';
             } else {
-                stopMarkerEl.style.left = `calc(${percentage}% - ${(elapsedDuration / totalDuration) * 15}px)`;
+                stopMarkerEl.style.left = `calc(${percentage}% - ${(elapsedDuration / totalDuration) * this.unitWidth}px)`;
                 stopMarkerEl.style.display = 'inline-block';
             }
         } else {
@@ -324,4 +325,3 @@ class Timeline {
         }
     }
 }
-window.Timeline = Timeline;
