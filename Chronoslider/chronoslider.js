@@ -187,8 +187,8 @@ export class Chronoslider {
         this.selectedStartDate = null;
         this.selectedEndDate = null;
         this.state = {
-            resolution: "year",
-            startDate: new Date(2025, 0, 1, 0),
+            resolution: options.resolution || "year",
+            startDate: options.startDate || new Date(2025, 0, 1, 0),
         }
         this.unitWidth = options.unitWidth || 15;
         this.color = options.color || '#000';
