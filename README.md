@@ -1,5 +1,5 @@
 # ChronoSlider
-A lightweight, configurable timeline component for selecting date ranges. Supports multiple zoom levels, drag-to-pan, and is responsive to screen.
+A lightweight, configurable timeline component for selecting date ranges. Supports multiple zoom levels, drag-to-pan, and is responsive to container size.
 
 ## Demo
 [Try on CodePen]()
@@ -13,16 +13,16 @@ A lightweight, configurable timeline component for selecting date ranges. Suppor
 - **Customizable**: Available CSS that can be used to custom style
 
 ## Installation
-1. Copy `Timeline.js` and `Timeline.css` to your project
+1. Copy `chronoslider.js` and `Chronoslider.css` to your project
 2. Import and initialize
     ```html
-    <link href="Timeline/timeline.css" rel="stylesheet">
+    <link href="Chronoslider/timeline.css" rel="stylesheet">
     <div id="my-timeline"></div>
     
     <script type="module">
-      import { Timeline } from './Timeline.js';
+      import { Chronoslider } from './Chronoslider.js';
       
-      const timeline = new Timeline('#my-timeline', {
+      const timeline = new Chronoslider('#my-timeline', {
         unitWidth: 15, // in pixels
         startDate: new Date(2025, 0, 1),
         resolution: 'year'

@@ -1,25 +1,33 @@
-#timeline-container {
+/* TODO: REMOVE */
+div#my-container {
+    position: absolute;
+    left: 200px;
+    bottom: 500px;
+    width: 600px;
+}
+
+.timeline-container {
     display: flex;
     flex-direction: column;
     --unit-width: 15px;
+    --timeline-color: #000;
     padding-top: var(--unit-width);
 }
 
-#timeline-container #line {
+.timeline-container #line {
     flex-grow: 1;
-    outline: 1px solid black;
+    outline: 1px solid var(--timeline-color);
     max-height: 0;
-    background-color: #000;
 }
 
-#timeline-container #timeline {
+.timeline-container #timeline {
     display: flex;
     cursor: pointer;
     user-select: none;
     justify-content: space-evenly;
 }
 
-#timeline-container .timeline-unit {
+.timeline-container .timeline-unit {
     flex: 1 1 auto;
     white-space: nowrap;
     text-align: center;
@@ -30,23 +38,22 @@
     padding-top: 0.2rem;
 }
 
-#timeline-container .timeline-unit::before {
+.timeline-container .timeline-unit::before {
     content: '';
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    outline: 1px solid black;
+    outline: 1px solid var(--timeline-color);
     width: 0;
     height: 0.35rem;
-    background-color: #000;
 }
 
-#timeline-container .timeline-unit.long-tick::before {
+.timeline-container .timeline-unit.long-tick::before {
     height: 0.8rem;
 }
 
-#timeline-container .label-container {
+.timeline-container .label-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -55,16 +62,17 @@
     min-height: 2.5rem;
 }
 
-#timeline-container .small-label {
+.timeline-container .small-label {
     font-size: 0.85rem;
-
+    color: var(--timeline-color);
 }
 
-#timeline-container .large-label {
+.timeline-container .large-label {
     font-size: 1.15rem;
+    color: var(--timeline-color);
 }
 
-#timeline-container #start-marker {
+.timeline-container #start-marker {
     width: var(--unit-width);
     height: var(--unit-width);
 
@@ -73,7 +81,7 @@
     display: none;
 }
 
-#timeline-container #stop-marker {
+.timeline-container #stop-marker {
     width: var(--unit-width);
     height: var(--unit-width);
 

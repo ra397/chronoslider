@@ -1,11 +1,10 @@
-import { Timeline } from "./Timeline/Timeline.js";
-import { TimelineController } from "./Timeline/TimelineController.js";
+import { Chronoslider } from "./Chronoslider/chronoslider.js";
 
-const timeline = new Timeline({
-    unitWidth: 35,
+const timeline = new Chronoslider('#my-container', {
+    unitWidth: 15,
+    color: '#8a8686',
 });
-const controller = new TimelineController(timeline);
 
-controller.onRangeSelected(({ startDate, endDate }) => {
+timeline.onRangeSelected(({ startDate, endDate }) => {
     console.log(startDate, endDate);
 });
