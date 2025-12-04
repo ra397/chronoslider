@@ -73,5 +73,3 @@ timeline.destroy();
 Modify `timeline.css` to change the appearance. The component uses CSS variables:
 - `--unit-width`: Controls spacing
 - `--timeline-color`: Controls color
-
-## License
