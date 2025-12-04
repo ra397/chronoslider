@@ -70,6 +70,6 @@ timeline.destroy();
 | Drag | Pan the timeline |
 
 ## Customization
-Modify `timeline.css` to change the appearance. The component uses CSS variables:
+Modify `chronoslider.css` to change the appearance. The component uses CSS variables:
 - `--unit-width`: Controls spacing
 - `--timeline-color`: Controls color
