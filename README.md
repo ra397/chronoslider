@@ -22,12 +22,12 @@ A simple timeline component for selecting date ranges.
 
 3. Create a container and initialize:
 ```html
-<div id="timeline"></div>
+<div class="my-container"></div>
 
 <script type="module">
   import { Chronoslider } from './chronoslider.js';
 
-  const timeline = new Chronoslider('#timeline', {
+  const timeline = new Chronoslider('.my-container', {
     unitWidth: 15,
     startDate: new Date(2025, 0, 1),
     resolution: 'year'
