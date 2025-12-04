@@ -1,12 +1,12 @@
 /* TODO: REMOVE */
 .my-container {
-    position: absolute;
     left: 200px;
     bottom: 500px;
     width: 600px;
 }
 
 .timeline-container {
+    position: absolute;
     display: flex;
     flex-direction: column;
     --unit-width: 15px;
