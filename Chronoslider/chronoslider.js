@@ -193,6 +193,12 @@ export class Chronoslider {
         this.unitWidth = options.unitWidth || 15;
         this.color = options.color || '#000';
 
+        this.resolutions = ['year', 'month', 'day', 'hour'];
+        this.minResolution = options.minResolution || 'year';
+        this.maxResolution = options.maxResolution || 'hour';
+
+        this._validateResolutions();
+
         this._rangeSelectedCallback = null;
 
         this._createElements();
@@ -229,6 +235,30 @@ export class Chronoslider {
         this.container.appendChild(this.stopMarker);
         this.container.appendChild(this.line);
         this.container.appendChild(this.timelineElement);
+    }
+
+    _validateResolutions() {
+        const resolutionIndex = this.resolutions.indexOf(this.state.resolution);
+        const minIndex = this.resolutions.indexOf(this.minResolution);
+        const maxIndex = this.resolutions.indexOf(this.maxResolution);
+
+        if (resolutionIndex === -1) {
+            throw new Error(`Invalid resolution: ${this.state.resolution}`);
+        }
+        if (minIndex === -1) {
+            throw new Error(`Invalid minResolution: ${this.minResolution}`);
+        }
+        if (maxIndex === -1) {
+            throw new Error(`Invalid maxResolution: ${this.maxResolution}`);
+        }
+
+        if (maxIndex < minIndex) {
+            throw new Error(`maxResolution (${this.maxResolution}) must have higher or equal index than minResolution (${this.minResolution})`);
+        }
+
+        if (resolutionIndex < minIndex || resolutionIndex > maxIndex) {
+            throw new Error(`resolution (${this.state.resolution}) must be between minResolution (${this.minResolution}) and maxResolution (${this.maxResolution})`);
+        }
     }
 
     onRangeSelected(callback) {
@@ -326,25 +356,31 @@ export class Chronoslider {
     }
 
     zoom(direction, hoverDate) {
-        const resolutions = ['year', 'month', 'day', 'hour'];
         const { resolution, startDate } = this.state;
         const numUnitsToShow = Math.floor(this.timelineElement.offsetWidth / this.unitWidth);
         const halfCount = Math.floor(numUnitsToShow / 2);
 
-        const currentIndex = resolutions.indexOf(resolution);
-        let newIndex;
+        const currentIndex = this.resolutions.indexOf(resolution);
+        let newResolutionIndex;
 
         if (direction === 'in') {
-            if (currentIndex >= resolutions.length - 1) return;
-            newIndex = currentIndex + 1;
+            if (currentIndex >= this.resolutions.length - 1) return;
+            newResolutionIndex = currentIndex + 1;
         } else if (direction === 'out') {
             if (currentIndex <= 0) return;
-            newIndex = currentIndex - 1;
+            newResolutionIndex = currentIndex - 1;
         } else {
             throw new Error('Unsupported zoom direction: ' + direction);
         }
 
-        const newResolution = resolutions[newIndex];
+        const newResolution = this.resolutions[newResolutionIndex];
+        const minResolutionIndex = this.resolutions.indexOf(this.minResolution);
+        const maxResolutionIndex = this.resolutions.indexOf(this.maxResolution);
+
+        if (newResolutionIndex < minResolutionIndex || newResolutionIndex > maxResolutionIndex) {
+            return;
+        }
+
         let newStartDate = new Date(startDate);
 
         if (direction === 'in' && hoverDate) {
@@ -437,6 +473,7 @@ export class Chronoslider {
 
     render() {
         this.container.style.setProperty('--unit-width', `${this.unitWidth}px`);
+        this.container.style.fontSize = `${this.unitWidth}px`;
         this.container.style.setProperty('--timeline-color', this.color);
         this.timelineElement.innerHTML = '';
 

@@ -35,7 +35,7 @@ div#my-container {
 
     position: relative;
 
-    padding-top: 0.2rem;
+    padding-top: 0.2em;
 }
 
 .timeline-container .timeline-unit::before {
@@ -46,11 +46,11 @@ div#my-container {
     transform: translateX(-50%);
     outline: 1px solid var(--timeline-color);
     width: 0;
-    height: 0.35rem;
+    height: 0.35em;
 }
 
 .timeline-container .timeline-unit.long-tick::before {
-    height: 0.8rem;
+    height: 0.8em;
 }
 
 .timeline-container .label-container {
@@ -58,18 +58,19 @@ div#my-container {
     flex-direction: column;
     align-items: center;
 
-    margin-top: 0.5rem;
-    min-height: 2.5rem;
+    margin-top: 0.5em;
+    min-height: 2.5em;
 }
 
 .timeline-container .small-label {
-    font-size: 0.85rem;
+    font-size: 0.85em;
     color: var(--timeline-color);
 }
 
 .timeline-container .large-label {
-    font-size: 1.15rem;
+    font-size: 1.15em;
     color: var(--timeline-color);
+    padding-top: 0.2ch;
 }
 
 .timeline-container #start-marker {
