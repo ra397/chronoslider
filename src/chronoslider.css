@@ -1,0 +1,197 @@
+/**
+ * chronoslider.css — styles for the ChronoSlider component.
+ *
+ * A hairline rule with ticks hanging from it, and a label only where a
+ * calendar boundary falls. Everything is namespaced under .chronoslider and
+ * every colour and metric is a custom property, so a host application can
+ * restyle the component by overriding them on .chronoslider (or any
+ * ancestor) without touching a single rule.
+ */
+
+.chronoslider {
+    /* metrics */
+    --cs-height: 46px;
+    --cs-tick-height: 5px;
+    --cs-tick-height-major: 11px;
+
+    /* palette */
+    --cs-ink: #202124;
+    --cs-muted: #767b80;
+    --cs-rule: #d8dcdf;
+    --cs-rule-major: #9aa1a7;
+    --cs-accent: #0f6f6c;
+    --cs-accent-fill: rgba(15, 111, 108, 0.08);
+
+    /* type */
+    --cs-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    position: relative;
+    width: 100%;
+    font-family: var(--cs-font);
+    color: var(--cs-ink);
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.chronoslider__viewport {
+    position: relative;
+    overflow: hidden;
+    height: var(--cs-height);
+    background: none;
+    cursor: grab;
+    touch-action: none;
+}
+
+.chronoslider--panning .chronoslider__viewport {
+    cursor: grabbing;
+}
+
+.chronoslider__viewport:focus-visible {
+    outline: 2px solid var(--cs-accent);
+    outline-offset: 2px;
+}
+
+/* The rule the ticks hang from. */
+.chronoslider__axis {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: var(--cs-rule);
+}
+
+.chronoslider__track {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+/* --- ticks ------------------------------------------------------- */
+
+.chronoslider__tick {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    will-change: transform;
+}
+
+.chronoslider__tick::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: var(--cs-tick-height);
+    background: var(--cs-rule);
+}
+
+.chronoslider__tick--major::before {
+    height: var(--cs-tick-height-major);
+    background: var(--cs-rule-major);
+}
+
+/* Labels are centred on their tick. The 0.5px offset accounts for the
+   1px-wide tick line, which is drawn from the tick position rightwards. */
+.chronoslider__label,
+.chronoslider__context {
+    position: absolute;
+    left: 0.5px;
+    transform: translateX(-50%);
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.chronoslider__label {
+    top: calc(var(--cs-tick-height-major) + 6px);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--cs-ink);
+}
+
+.chronoslider__context {
+    top: calc(var(--cs-tick-height-major) + 21px);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--cs-muted);
+}
+
+/* --- selection --------------------------------------------------- */
+
+.chronoslider__range {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    display: none;
+    background: var(--cs-accent-fill);
+    will-change: transform, width;
+}
+
+.chronoslider__range--visible {
+    display: block;
+}
+
+.chronoslider__marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    display: none;
+    z-index: 2;
+    will-change: transform;
+}
+
+.chronoslider__marker--visible {
+    display: block;
+}
+
+/* the marker's vertical line */
+.chronoslider__marker::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: var(--cs-accent);
+}
+
+/* a small flag: start points forward into the range, end points back into it */
+.chronoslider__marker::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 7px;
+    height: 7px;
+    background: var(--cs-accent);
+}
+
+.chronoslider__marker--start::after {
+    left: 0;
+    border-radius: 0 1px 1px 0;
+}
+
+.chronoslider__marker--end::after {
+    left: -7px;
+    border-radius: 1px 0 0 1px;
+}
+
+/* --- dark scheme ------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+    .chronoslider {
+        --cs-ink: #e6eaed;
+        --cs-muted: #8d959b;
+        --cs-rule: #3a4248;
+        --cs-rule-major: #6d777e;
+        --cs-accent: #4fbdb5;
+        --cs-accent-fill: rgba(79, 189, 181, 0.10);
+    }
+}
