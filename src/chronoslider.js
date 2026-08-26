@@ -14,6 +14,7 @@
  * ------------------------------------------------------------------ */
 
 const RESOLUTIONS = ['year', 'month', 'day', 'hour'];
+const TIMEZONES = ['local', 'utc'];
 
 /** Pixels between two adjacent ticks, per resolution. */
 const TICK_PX = {
@@ -47,55 +48,88 @@ const fdiv = (a, b) => Math.floor(a / b);
 const fmod = (a, b) => a - fdiv(a, b) * b;
 const pad2 = (n) => String(n).padStart(2, '0');
 
-/** Build a local Date from calendar fields, tolerating out-of-range values. */
-function makeDate(year, month, day, hours = 0, minutes = 0) {
-    const d = new Date(2000, 0, 1, 0, 0, 0, 0);
-    d.setFullYear(year, month, day);
-    d.setHours(hours, minutes, 0, 0);
-    return d;
+/**
+ * Calendar field access, per supported timezone. Every helper below reads and
+ * writes calendar fields exclusively through one of these, so local time and
+ * UTC share a single implementation of the tick maths.
+ */
+const CALENDARS = {
+    local: {
+        year: (d) => d.getFullYear(),
+        month: (d) => d.getMonth(),
+        day: (d) => d.getDate(),
+        hours: (d) => d.getHours(),
+        minutes: (d) => d.getMinutes(),
+        make(year, month, day, hours, minutes) {
+            const d = new Date(2000, 0, 1, 0, 0, 0, 0);
+            d.setFullYear(year, month, day);
+            d.setHours(hours, minutes, 0, 0);
+            return d;
+        },
+    },
+    utc: {
+        year: (d) => d.getUTCFullYear(),
+        month: (d) => d.getUTCMonth(),
+        day: (d) => d.getUTCDate(),
+        hours: (d) => d.getUTCHours(),
+        minutes: (d) => d.getUTCMinutes(),
+        make(year, month, day, hours, minutes) {
+            const d = new Date(Date.UTC(2000, 0, 1));
+            d.setUTCFullYear(year, month, day);
+            d.setUTCHours(hours, minutes, 0, 0);
+            return d;
+        },
+    },
+};
+
+/** Build a Date from calendar fields in `tz`, tolerating out-of-range values. */
+function makeDate(tz, year, month, day, hours = 0, minutes = 0) {
+    return CALENDARS[tz].make(year, month, day, hours, minutes);
 }
 
-/** Whole days between the local midnight of `date` and 1970-01-01. */
-function dayIndex(date) {
+/** Whole days between the midnight of `date` in `tz` and 1970-01-01. */
+function dayIndex(date, tz) {
+    const cal = CALENDARS[tz];
     return Math.round(
-        (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(1970, 0, 1)) / MS_PER_DAY
+        (Date.UTC(cal.year(date), cal.month(date), cal.day(date)) - Date.UTC(1970, 0, 1)) / MS_PER_DAY
     );
 }
 
 /** Integer index of the tick containing `date`. */
-function unitIndex(date, resolution) {
+function unitIndex(date, resolution, tz) {
+    const cal = CALENDARS[tz];
     switch (resolution) {
-        case 'year': return date.getFullYear() * 12 + date.getMonth();
-        case 'month': return dayIndex(date);
-        case 'day': return dayIndex(date) * 24 + date.getHours();
-        case 'hour': return dayIndex(date) * 288 + date.getHours() * 12 + fdiv(date.getMinutes(), 5);
+        case 'year': return cal.year(date) * 12 + cal.month(date);
+        case 'month': return dayIndex(date, tz);
+        case 'day': return dayIndex(date, tz) * 24 + cal.hours(date);
+        case 'hour': return dayIndex(date, tz) * 288 + cal.hours(date) * 12 + fdiv(cal.minutes(date), 5);
     }
 }
 
 /** Start date of the tick with integer index `i`. */
-function indexToDate(i, resolution) {
+function indexToDate(i, resolution, tz) {
     switch (resolution) {
-        case 'year': return makeDate(fdiv(i, 12), fmod(i, 12), 1);
-        case 'month': return makeDate(1970, 0, 1 + i);
-        case 'day': return makeDate(1970, 0, 1 + fdiv(i, 24), fmod(i, 24));
-        case 'hour': return makeDate(1970, 0, 1 + fdiv(i, 288), 0, fmod(i, 288) * 5);
+        case 'year': return makeDate(tz, fdiv(i, 12), fmod(i, 12), 1);
+        case 'month': return makeDate(tz, 1970, 0, 1 + i);
+        case 'day': return makeDate(tz, 1970, 0, 1 + fdiv(i, 24), fmod(i, 24));
+        case 'hour': return makeDate(tz, 1970, 0, 1 + fdiv(i, 288), 0, fmod(i, 288) * 5);
     }
 }
 
 /** Continuous index of `date`: the tick index plus the fraction elapsed inside it. */
-function fractionalIndex(date, resolution) {
-    const i = unitIndex(date, resolution);
-    const start = indexToDate(i, resolution).getTime();
-    const span = indexToDate(i + 1, resolution).getTime() - start;
+function fractionalIndex(date, resolution, tz) {
+    const i = unitIndex(date, resolution, tz);
+    const start = indexToDate(i, resolution, tz).getTime();
+    const span = indexToDate(i + 1, resolution, tz).getTime() - start;
     if (span <= 0) return i;
     return i + (date.getTime() - start) / span;
 }
 
 /** Inverse of fractionalIndex. */
-function dateFromFractionalIndex(f, resolution) {
+function dateFromFractionalIndex(f, resolution, tz) {
     const i = Math.floor(f);
-    const start = indexToDate(i, resolution).getTime();
-    const span = indexToDate(i + 1, resolution).getTime() - start;
+    const start = indexToDate(i, resolution, tz).getTime();
+    const span = indexToDate(i + 1, resolution, tz).getTime() - start;
     return new Date(start + (f - i) * Math.max(span, 0));
 }
 
@@ -104,28 +138,31 @@ function dateFromFractionalIndex(f, resolution) {
  * the hour skipped by a spring-forward DST transition. Such a slot is left
  * blank rather than rendered as a duplicate of the following hour.
  */
-function tickExists(index, date, resolution) {
+function tickExists(index, date, resolution, tz) {
+    if (tz === 'utc') return true;                  // UTC has no DST gaps
     if (resolution !== 'day' && resolution !== 'hour') return true;
-    return unitIndex(date, resolution) === index;
+    return unitIndex(date, resolution, tz) === index;
 }
 
 /** True when a tick carries a prominent label at this resolution. */
-function isMajorTick(date, resolution) {
+function isMajorTick(date, resolution, tz) {
+    const cal = CALENDARS[tz];
     switch (resolution) {
-        case 'year': return date.getMonth() === 0;
-        case 'month': return date.getDate() === 1;
-        case 'day': return date.getHours() === 0;
-        case 'hour': return date.getMinutes() === 0;
+        case 'year': return cal.month(date) === 0;
+        case 'month': return cal.day(date) === 1;
+        case 'day': return cal.hours(date) === 0;
+        case 'hour': return cal.minutes(date) === 0;
     }
 }
 
 /** The label on a major tick: the boundary it marks. */
-function majorLabel(date, resolution) {
+function majorLabel(date, resolution, tz) {
+    const cal = CALENDARS[tz];
     switch (resolution) {
-        case 'year': return String(date.getFullYear());
-        case 'month': return MONTHS[date.getMonth()];
-        case 'day': return `${MONTHS[date.getMonth()]} ${date.getDate()}`;
-        case 'hour': return `${pad2(date.getHours())}:00`;
+        case 'year': return String(cal.year(date));
+        case 'month': return MONTHS[cal.month(date)];
+        case 'day': return `${MONTHS[cal.month(date)]} ${cal.day(date)}`;
+        case 'hour': return `${pad2(cal.hours(date))}:00`;
     }
 }
 
@@ -158,11 +195,12 @@ export class ChronoSlider {
         /* --- timeline state --- */
         this.container = container;
         this.resolution = resolution;
+        this.timezone = 'local';
         this.centerDate = new Date(centerDate.getTime());
         this.startTick = null;
         this.endTick = null;
 
-        this._centerIndex = fractionalIndex(this.centerDate, resolution);
+        this._centerIndex = fractionalIndex(this.centerDate, resolution, this.timezone);
         this._width = 0;
         this._callback = null;
         this._lastEmitted = null;
@@ -198,6 +236,32 @@ export class ChronoSlider {
             throw new TypeError('ChronoSlider: onRangeSelected expects a function.');
         }
         this._callback = callback;
+        return this;
+    }
+
+    /**
+     * Draw the timeline in `'local'` time or `'utc'`. Ticks fall on that
+     * calendar's boundaries and labels are formatted in it.
+     *
+     * The centre of the view and both selected instants are preserved — only
+     * the calendar they are described in changes. A selection made in one zone
+     * may therefore not sit exactly on a tick in the other, wherever the two
+     * calendars disagree about where a boundary falls.
+     */
+    setTimezone(timezone) {
+        if (!TIMEZONES.includes(timezone)) {
+            throw new TypeError(`ChronoSlider: timezone must be one of ${TIMEZONES.join(', ')}.`);
+        }
+        if (timezone === this.timezone) return this;
+
+        this.timezone = timezone;
+        // centerDate is an absolute instant and survives the switch; the index
+        // space it maps onto does not, so rebuild it.
+        this._centerIndex = fractionalIndex(this.centerDate, this.resolution, timezone);
+
+        this._invalidateLabels();
+        this.root.dataset.timezone = timezone;
+        this._render();
         return this;
     }
 
@@ -278,7 +342,7 @@ export class ChronoSlider {
 
     /** Horizontal pixel position of a date within the viewport. */
     _xForDate(date) {
-        return this._width / 2 + (fractionalIndex(date, this.resolution) - this._centerIndex) * this._pxPerUnit;
+        return this._width / 2 + (fractionalIndex(date, this.resolution, this.timezone) - this._centerIndex) * this._pxPerUnit;
     }
 
     /** Continuous index at a horizontal pixel position. */
@@ -288,7 +352,7 @@ export class ChronoSlider {
 
     /** The tick nearest to a horizontal pixel position. */
     _tickAtX(x) {
-        return indexToDate(Math.round(this._indexForX(x)), this.resolution);
+        return indexToDate(Math.round(this._indexForX(x)), this.resolution, this.timezone);
     }
 
     _localX(event) {
@@ -329,8 +393,8 @@ export class ChronoSlider {
         for (let n = 0; n < this._tickPool.length; n++) {
             const slot = this._tickPool[n];
             const index = from + n;
-            const date = n < needed ? indexToDate(index, this.resolution) : null;
-            const visible = n < needed && tickExists(index, date, this.resolution);
+            const date = n < needed ? indexToDate(index, this.resolution, this.timezone) : null;
+            const visible = n < needed && tickExists(index, date, this.resolution, this.timezone);
 
             if (!visible) {
                 if (slot.el.style.display !== 'none') slot.el.style.display = 'none';
@@ -343,19 +407,19 @@ export class ChronoSlider {
 
             slot.el.style.transform = `translateX(${x.toFixed(2)}px)`;
 
-            const major = isMajorTick(date, this.resolution);
+            const major = isMajorTick(date, this.resolution, this.timezone);
             if (slot.major !== major) {
                 slot.el.classList.toggle('chronoslider__tick--major', major);
                 slot.major = major;
             }
 
-            const label = major ? majorLabel(date, this.resolution) : '';
+            const label = major ? majorLabel(date, this.resolution, this.timezone) : '';
             if (slot.labelText !== label) {
                 slot.label.textContent = label;
                 slot.labelText = label;
             }
 
-            const context = major ? contextLabel(date, this.resolution) : '';
+            const context = major ? contextLabel(date, this.resolution, this.timezone) : '';
             if (slot.contextText !== context) {
                 slot.context.textContent = context;
                 slot.contextText = context;
@@ -459,7 +523,7 @@ export class ChronoSlider {
         }
         if (this.startTick) return this.startTick;
         if (this.endTick) return this.endTick;
-        return dateFromFractionalIndex(this._indexForX(mouseX), this.resolution);
+        return dateFromFractionalIndex(this._indexForX(mouseX), this.resolution, this.timezone);
     }
 
     _zoom(direction, mouseX) {
@@ -470,22 +534,26 @@ export class ChronoSlider {
         const anchorX = this._xForDate(anchor);
 
         this.resolution = RESOLUTIONS[level];
-        this._centerIndex = fractionalIndex(anchor, this.resolution)
+        this._centerIndex = fractionalIndex(anchor, this.resolution, this.timezone)
             - (anchorX - this._width / 2) / this._pxPerUnit;
         this._syncCenterDate();
 
-        // Every label changes meaning at a new resolution; force a full refresh.
+        this._invalidateLabels();
+        this.root.dataset.resolution = this.resolution;
+        this._render();
+    }
+
+    /** Drop the cached tick text so the next render rewrites every label. */
+    _invalidateLabels() {
         for (const slot of this._tickPool) {
             slot.major = null;
             slot.labelText = null;
             slot.contextText = null;
         }
-        this.root.dataset.resolution = this.resolution;
-        this._render();
     }
 
     _syncCenterDate() {
-        this.centerDate = dateFromFractionalIndex(this._centerIndex, this.resolution);
+        this.centerDate = dateFromFractionalIndex(this._centerIndex, this.resolution, this.timezone);
     }
 
     /* -------------------------------------------------------------- *
@@ -494,6 +562,7 @@ export class ChronoSlider {
 
     _bindEvents() {
         this.root.dataset.resolution = this.resolution;
+        this.root.dataset.timezone = this.timezone;
 
         this._onPointerDown = (e) => {
             if (e.button !== 0 || this._pointerId !== null) return;

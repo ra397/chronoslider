@@ -6,4 +6,6 @@ const slider = new ChronoSlider(
     'day'
 );
 
+slider.setTimezone('utc');
+
 slider.onRangeSelected((start, end) => console.log(start, end));
