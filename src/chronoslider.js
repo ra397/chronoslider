@@ -176,6 +176,19 @@ function contextLabel(date, resolution) {
     }
 }
 
+/** Full description of a tick, for the hover tooltip. */
+function tickTooltip(date, resolution, tz) {
+    const cal = CALENDARS[tz];
+    const day = `${MONTHS[cal.month(date)]} ${cal.day(date)}, ${cal.year(date)}`;
+    const suffix = tz === 'utc' ? ' UTC' : '';
+    switch (resolution) {
+        case 'year': return `${MONTHS[cal.month(date)]} ${cal.year(date)}`;
+        case 'month': return day;
+        case 'day': return `${day} ${pad2(cal.hours(date))}:00${suffix}`;
+        case 'hour': return `${day} ${pad2(cal.hours(date))}:${pad2(cal.minutes(date))}${suffix}`;
+    }
+}
+
 /* ------------------------------------------------------------------ *
  * Component
  * ------------------------------------------------------------------ */
@@ -236,6 +249,24 @@ export class ChronoSlider {
             throw new TypeError('ChronoSlider: onRangeSelected expects a function.');
         }
         this._callback = callback;
+        return this;
+    }
+
+    /**
+     * Zoom one step in (year -> month -> day -> hour) or out, for toolbar
+     * buttons. Both stop at the ends of the hierarchy rather than wrapping.
+     *
+     * The anchor follows the same rule as wheel zooming, minus the pointer:
+     * the selection if there is one (the midpoint when both ticks are set),
+     * otherwise the centre of the timeline.
+     */
+    zoomIn() {
+        this._zoom(1, this._width / 2);
+        return this;
+    }
+
+    zoomOut() {
+        this._zoom(-1, this._width / 2);
         return this;
     }
 
@@ -348,6 +379,23 @@ export class ChronoSlider {
     /** Continuous index at a horizontal pixel position. */
     _indexForX(x) {
         return this._centerIndex + (x - this._width / 2) / this._pxPerUnit;
+    }
+
+    /**
+     * Name the tick under the pointer in the viewport's `title`, so hovering
+     * shows the time a click would select. Skipped while panning.
+     */
+    _updateTooltip(event) {
+        if (this._dragging) return;
+        const text = tickTooltip(this._tickAtX(this._localX(event)), this.resolution, this.timezone);
+        if (text === this._tooltipText) return;
+        this._tooltipText = text;
+        this.viewport.title = text;
+    }
+
+    _clearTooltip() {
+        this._tooltipText = null;
+        this.viewport.removeAttribute('title');
     }
 
     /** The tick nearest to a horizontal pixel position. */
@@ -494,6 +542,35 @@ export class ChronoSlider {
         this._applySelection(ns, ne);
     }
 
+    /**
+     * Double-click. With a selected interval, a click inside it clears the
+     * selection and a click outside recentres the timeline on it. With a
+     * single selected tick, any double-click recentres on that tick. With no
+     * selection there is nothing to act on, so nothing happens.
+     */
+    _doubleClick(x) {
+        if (!this.startTick && !this.endTick) return;
+
+        if (this.startTick && this.endTick) {
+            const t = dateFromFractionalIndex(this._indexForX(x), this.resolution, this.timezone).getTime();
+            if (t >= this.startTick.getTime() && t <= this.endTick.getTime()) {
+                this.clearSelection();
+                return;
+            }
+        }
+
+        // Same anchor rule as zooming: the midpoint of a range, or the lone tick.
+        this._centerOn(this._zoomAnchor(x));
+    }
+
+    /** Move the viewport so `date` sits at the centre. Selection untouched. */
+    _centerOn(date) {
+        this._centerIndex = fractionalIndex(date, this.resolution, this.timezone);
+        this._syncCenterDate();
+        this._clearTooltip();
+        this._render();
+    }
+
     _applySelection(start, end) {
         this.startTick = start;
         this.endTick = end;
@@ -576,6 +653,7 @@ export class ChronoSlider {
         };
 
         this._onPointerMove = (e) => {
+            this._updateTooltip(e);
             if (e.pointerId !== this._pointerId) return;
             const dx = e.clientX - this._pressX;
             const dy = e.clientY - this._pressY;
@@ -583,6 +661,7 @@ export class ChronoSlider {
             if (!this._dragging) {
                 if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
                 this._dragging = true;
+                this._clearTooltip();
                 this.root.classList.add('chronoslider--panning');
             }
             // Dragging left (dx < 0) moves the timeline forward in time.
@@ -613,10 +692,10 @@ export class ChronoSlider {
             }, CLICK_DELAY);
         };
 
-        this._onDblClick = () => {
+        this._onDblClick = (e) => {
             clearTimeout(this._clickTimer);
             this._clickTimer = 0;
-            this.clearSelection();
+            this._doubleClick(this._localX(e));
         };
 
         this._onWheel = (e) => {
